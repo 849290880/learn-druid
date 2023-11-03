@@ -21,9 +21,6 @@
     <!--1. 输出到控制台-->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <!--此日志appender是为开发使用，只配置最低级别，控制台输出的日志级别是大于或等于此级别的日志信息-->
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
         <encoder>
             <Pattern>${CONSOLE_LOG_PATTERN}</Pattern>
             <!-- 设置字符集 -->
@@ -76,8 +73,8 @@
 <!--    <logger name="io.netty" level="DEBUG" addtivity="false"> </logger>-->
 <!--    <logger name="com.example.netty.util.SendCommand" level="DEBUG" addtivity="true"> </logger>-->
 
-    <logger name="druid.sql.Statement" level="DEBUG" additivity="false"/>
-    <logger name="com.example.logdemo.controller.HelloController" level="DEBUG" additivity="false"/>
+    <logger name="druid.sql.Statement" level="DEBUG" additivity="true"/>
+    <logger name="com.example.logdemo.controller.HelloController" level="DEBUG" additivity="true"/>
 
 
     <root level="INFO">

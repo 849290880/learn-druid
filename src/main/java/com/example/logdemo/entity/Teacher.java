@@ -1,2 +1,5 @@
-package com.example.logdemo.entity;public class Teacher {
+package com.example.logdemo.entity;
+
+
+public class Teacher {
 }
