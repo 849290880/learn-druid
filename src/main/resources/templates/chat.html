@@ -1,0 +1,207 @@
+<!-- src/main/resources/templates/chat.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>聊天室</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 500px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .chat-messages {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            overflow-y: auto;
+            text-align: left;
+            background-color: #f9f9f9;
+        }
+        .chat-input {
+            display: flex;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .logout-btn {
+            padding: 8px 15px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 15px;
+            align-self: flex-end;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .message-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message-username {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .message-content {
+            margin-left: 5px;
+        }
+        .message-timestamp {
+            font-size: 0.8em;
+            color: #666;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <a href="/logout" class="logout-btn">退出登录</a>
+        <!-- 修改: 显示当前用户名 -->
+        <h2>聊天室 (<span th:text="${user.username}"></span>)</h2>
+        <div class="chat-messages" id="chatMessages">
+            <!-- 聊天记录将显示在这里 -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="message" placeholder="输入消息...">
+            <button class="btn" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        // 修改: 从服务端获取当前用户名
+        let username = "[[${user.username}]]"; // 从Thymeleaf获取用户名
+        let pollingInterval;
+        
+        // 页面加载完成后获取历史消息
+        window.onload = function() {
+            loadMessages();
+            // 每2秒轮询一次新消息
+            pollingInterval = setInterval(loadMessages, 2000);
+        };
+        
+        // 页面关闭时清理定时器
+        window.onbeforeunload = function() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        };
+        
+        function loadMessages() {
+            fetch('/chat/messages')
+                .then(response => response.json())
+                .then(messages => {
+                    const messagesDiv = document.getElementById('chatMessages');
+                    messagesDiv.innerHTML = '';
+                    
+                    messages.forEach(message => {
+                        const messageElement = createMessageElement(message);
+                        messagesDiv.appendChild(messageElement);
+                    });
+                    
+                    // 滚动到底部
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('获取消息失败:', error);
+                });
+        }
+        
+        function createMessageElement(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-item';
+            
+            const timestamp = new Date(message.timestamp).toLocaleTimeString();
+            
+            messageDiv.innerHTML = `
+                <span class="message-username">${message.username}:</span>
+                <span class="message-content">${message.content}</span>
+                <span class="message-timestamp">${timestamp}</span>
+            `;
+            
+            return messageDiv;
+        }
+        
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const content = messageInput.value.trim();
+            
+            if (content) {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('content', content);
+                formData.append('room', 'default');
+                
+                fetch('/chat/send', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(message => {
+                    // 清空输入框
+                    messageInput.value = '';
+                    
+                    // 添加新消息到界面
+                    const messagesDiv = document.getElementById('chatMessages');
+                    const messageElement = createMessageElement(message);
+                    messagesDiv.appendChild(messageElement);
+                    
+                    // 滚动到底部
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('发送消息失败:', error);
+                    alert('发送消息失败');
+                });
+            }
+        }
+        
+        // 回车发送消息
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
